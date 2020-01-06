@@ -83,6 +83,24 @@ def roundTime(dt=None, roundTo=60):
    rounding = (seconds+roundTo/2) // roundTo * roundTo
    return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
 
+def _construct_bars_collections(dates, highs, lows, color='k'):
+    rangeSegments = [((dt, low), (dt, high)) for dt, low, high in
+                     zip(dates, lows, highs) if low != -1]
+
+    avg_dist_between_points = (dates[-1] - dates[0]) / float(len(dates))
+
+    ticksize = avg_dist_between_points / 2.5
+
+    useAA = 0,    # use tuple here
+    lw    = 0.5,  # use tuple here
+    lw = None
+    rangeCollection = LineCollection(rangeSegments,
+                                     colors=[color]*len(highs),
+                                     linewidths=lw,
+                                     antialiaseds=useAA
+                                     )
+    return (rangeCollection,)
+
 def _construct_ohlc_collections(dates, opens, highs, lows, closes, colorup='k', colordown='k'):
     """Represent the time, open, high, low, close as a vertical line
     ranging from low to high.  The left tick is the open and the right

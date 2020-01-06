@@ -2,6 +2,7 @@ import matplotlib.dates  as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy  as np
+import pathlib
 
 plt.style.use('seaborn-darkgrid')
 #import matplotlib as mpl
@@ -17,6 +18,7 @@ from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
 
 from mplfinance._utils import _construct_ohlc_collections
+from mplfinance._utils import _construct_bars_collections
 from mplfinance._utils import _construct_candlestick_collections
 from mplfinance._utils import IntegerIndexDateTimeFormatter
 
@@ -132,7 +134,35 @@ def _valid_kwargs_table():
         'autofmt_xdate':{ 'Default'     : False,
  
                           'Implemented' : True,
-                          'Validator'   : lambda value: isinstance(value,bool) }
+                          'Validator'   : lambda value: isinstance(value,bool)
+                        },
+
+        'pattern':{ 'Default'     : None,
+ 
+                          'Implemented' : True,
+                          'Validator'   :
+                   lambda value:
+                       isinstance(value,tuple)
+                       and len(value)==2
+                       and isinstance(value[0], list)
+                       and isinstance(value[1], list)
+                       and len(value[0])==len(value[1])
+                  },
+
+        'pattern_color': {
+            'Default': None,
+            'Implemented' : True,
+            'Validator'   :
+                lambda value: isinstance(value,str) or value is None
+        },
+
+        'save_path': {
+            'Default': None,
+            'Implemented': True,
+            'Validator': lambda value: isinstance(value, pathlib.PosixPath) \
+                                       or value is None
+        }
+
     }
     # Check that we didn't make a typo in any of the things above
     #  that should otherwise be the same for all kwags:
@@ -217,17 +247,24 @@ def plot( data, **kwargs ):
 
     # Default logic for 'no_xgaps':  True for intraday data spanning 2 or more days, else False
     # Caller provided 'no_xgaps' kwarg OVERRIDES default logic.
-
     no_xgaps = False
+
+    if config.get('pattern') is not None:
+        ax1.plot(mdates.date2num(config['pattern'][0]), config['pattern'][1],
+                 color=config.get('pattern_color'))
 
     # avgerage of 3 or more data points per day we will call intraday data:
     if avg_days_between_points < 0.33:  # intraday
         if mdates.num2date(dates[-1]).date() != mdates.num2date(dates[0]).date():
             # intraday data for more than one day:
-            no_xgaps = True
+            #no_xgaps = True
             fmtstring = '%b %d, %H:%M'
+            ax1.set_title(
+                mdates.num2date(dates[0]).strftime('%-d.%-m.%Y')+' - '
+                +mdates.num2date(dates[-1]).strftime('%-d.%-m.%Y'))
         else:  # intraday data for a single day
             fmtstring = '%H:%M'
+            ax1.set_title(mdates.num2date(dates[0]).strftime('%-d.%-m.%Y'))
     else:  # 'daily' data (or could be weekly, etc.)
         if mdates.num2date(dates[-1]).date().year != mdates.num2date(dates[0]).date().year:
            fmtstring = '%Y %b %d'
@@ -254,7 +291,9 @@ def plot( data, **kwargs ):
     collections = None
     if ptype == 'candle' or ptype == 'candlestick':
         collections = _construct_candlestick_collections(xdates, opens, highs, lows, closes )
-    elif ptype == 'ohlc' or ptype == 'bars' or ptype == 'ohlc_bars':
+    elif ptype == 'bars':
+        collections = _construct_bars_collections(xdates, highs, lows)
+    elif ptype == 'ohlc' or ptype == 'ohlc_bars':
         collections = _construct_ohlc_collections(xdates, opens, highs, lows, closes )
     elif ptype == 'line':
         ax1.plot(xdates, closes, color='k')
@@ -328,5 +367,9 @@ def plot( data, **kwargs ):
         vol_label = 'Volume x '+str(offset)
         ax2.set_ylabel(vol_label,size='x-large',weight='semibold')
 
-    plt.show()
+    if config.get('save_path') is not None:
+        plt.savefig(config['save_path'])
+        plt.close()
+    else:
+        plt.show()
 
