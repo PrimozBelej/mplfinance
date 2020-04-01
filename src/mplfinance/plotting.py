@@ -261,11 +261,11 @@ def plot( data, **kwargs ):
             #no_xgaps = True
             fmtstring = '%b %d, %H:%M'
             ax1.set_title(
-                mdates.num2date(dates[0]).strftime('%-d.%-m.%Y')+' - '
-                +mdates.num2date(dates[-1]).strftime('%-d.%-m.%Y'))
+                mdates.num2date(dates[0]).strftime('%d.%m.%Y')+' - '
+                +mdates.num2date(dates[-1]).strftime('%d.%m.%Y'))
         else:  # intraday data for a single day
             fmtstring = '%H:%M'
-            ax1.set_title(mdates.num2date(dates[0]).strftime('%-d.%-m.%Y'))
+            ax1.set_title(mdates.num2date(dates[0]).strftime('%d.%m.%Y'))
     else:  # 'daily' data (or could be weekly, etc.)
         if mdates.num2date(dates[-1]).date().year != mdates.num2date(dates[0]).date().year:
            fmtstring = '%Y %b %d'
