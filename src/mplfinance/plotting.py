@@ -160,6 +160,7 @@ def _valid_kwargs_table():
             'Default': None,
             'Implemented': True,
             'Validator': lambda value: isinstance(value, pathlib.PosixPath) \
+                                       or isinstance(value, pathlib.WindowsPath) \
                                        or value is None
         }
 
